@@ -13,6 +13,12 @@ The work was completed as part of **STAT170 (Regression Analysis)** at UC Rivers
 - Subset used: Reduced for processing speed and interpretability
 - Response variable: `TotalSaleValue` (property sale price in $1000s)
 
+## Data Access
+The dataset (`property.csv`) is too large to host directly in this repository.  
+It can be downloaded from the Town of Cary GIS Group: [[link here](https://www.kaggle.com/datasets/irakozekelly/real-estate-data)].
+
+Place the file in the project root directory (same folder as `STAT170_Project.Rmd`) before running the analysis.
+
 ### Key predictors examined:
 - `TotalBldgSqft` — total building square feet  
 - `DeedAcres` — acreage of the property  
