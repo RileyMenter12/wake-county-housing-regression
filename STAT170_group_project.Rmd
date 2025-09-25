@@ -1,0 +1,674 @@
+---
+title: "STAT170 Final Project Part 2"
+author: "Ryan Kitagawa, Lucas Chin, Riley Menter, Justin Tran"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### Introduction
+
+This dataset was created, cleaned, and modified by the Town of Cary GIS Group. Our goal was to explore the practical applications of GIS in real estate and investigate how various factors influence housing prices.
+
+Our research question was: What factors are associated with higher and lower housing prices in Wake County? We hypothesized that total sales values for houses in Wake County are correlated with specific property characteristics. This research is motivated by the practical applications of GIS in real estate and the need for insights into housing prices.
+
+The National Academic Press in GIS for Housing and Urban Development (2003) highlights that "agencies such as state, local, and federal governments need geographic information to carry out missions, such as resource conservation, infrastructure planning, and land-use analysis. HUD uses geographic information to increase homeownership, support community development, and improve access to affordable housing free from discrimination."
+
+For this project, we analyzed a real estate dataset from three counties in North Carolina, provided by the Town of Cary GIS Group. The dataset was originally cleaned and modified to suit the town’s needs. It contained 285,000 observations and 62 variables, but we narrowed our focus to a subset to improve processing speed and model interpretability. Our motivation to work on this dataset was to see the practical uses and applications of GIS in real estate. We also wanted to investigate how different variables affect housing prices.
+
+Understanding predictors of housing prices is vital for buyers, sellers, urban planners, and policymakers. Using exploratory data analysis (EDA), we employed descriptive statistics and visualizations to examine the data’s structure and distributions. Our response variable, TotalSaleValue, initially exhibited a right-skewed distribution. To meet the assumptions of linear regression, we applied a Box-Cox transformation and settled on a square-root transformation to approximate normality, as illustrated in the histogram of the transformed variable.
+
+### Key variables in our analysis included:
+
+TotalSaleValue: The sale price of the property per $1000 (response variable).
+TotalBldgSqft: The total building area per sqft.
+DeedAcres: The acreage of the property per acre.
+BuiltBefore1990: Whether the building was constructed before 1990 (binary variable).
+LandValue: The assessed value of the land per $1000.
+BldgValue: The assessed value of the property per $1000.
+IsDetachedUnit (1 for True and 0 for False): If the primary structure on the property is a detached unit or not.
+
+
+### EDA
+
+We added the above predictors to our initial model and checked to make sure that at least one of the predictors was significant. Our initial fit model had an adjusted R-squared value of 0.4521 and a P value of <2.2e-16. Our histogram was unimodal and is skewed to the right. From here, we briefly checked our model assumptions. Our residual vs fitted plot shows a slight pattern where values to the right had lower residuals, so the linearity condition and the constant variance conditions were not satisfied. Our normal Q-Q plot deviated from the line of best fit towards the edges, and our Shapiro-Wilkes test gave us a very small number so we concluded that our current model violated the normality assumption. Our Durbin-Watson test gave a non-significant value and the VIF test values were under 10 for all variables so we concluded that our model had independently collected samples and no multicollinearity issues. 
+
+
+### Regression Analysis
+
+Since our model did not satisfy the normality conditions, we used the Box-Cox test and determined from the curve that a square root transformation for our response variable Total Sales Value was necessary. We double-checked this by using the box-cox power test and found that the value was around 0.5, which confirms that square root transformation is necessary. We checked on the model assumptions again. Our histogram was more normal and the Q-Q normal plot followed the line of best fit a little better, but still trailed off around the edges. After following through with the Shapiro-Wilkes test and getting a very small value, we concluded that our model still violated the normality assumption.
+
+In order to weed out any unnecessary variables, we conducted stepwise regression twice for consistency. We started with only the intercept for the first step model and started with all of the predictors for our second model. Both approaches resulted in the same final model with the five variables Building value, land value, total building square feet, acres in deed, and whether the house was built before 1990 or not. We ran the Box-Cox model on the new step model to ensure that the response variable should still have a square root transformation applied. Our box-cox curve showed a value around 0.3, confirmed by the box-cox power test.
+
+We checked our model assumptions once more from here and found that our normality assumption still wasn’t satisfied. We also ran residuals for each predictor and saw that land value and acres in deed both had an exponential curve trend. Because of this we applied a log transformation on these two predictors and ran the residuals on them again to see that they had less of a pattern. From here, we checked on all of the assumptions again and saw that the normality assumption was still not satisfied, so we turned to higher-order terms and interaction terms to increase our R-squared values and meet our assumptions
+
+After refining our residuals, the adjusted R-squared value increased to 0.4001. This suggests that a higher-order model with interaction terms could improve the fit.
+
+The final model that we obtained is:
+
+$Total Sale Value (Y) = 6.488 + 0.106(Building Value) + 0.249(Land Value) - 1.160e-2 (Total Building Square Feet)  + 5.125(Recorded Acres) + 0.362(Built Before 1990) - 9.795e-6 (Building Value)2 - 1.360e-2 (Land Value)*(Total Building Square Feet) - 0.975(Building Value) * (Recorded Acres)$
+
+The final regression model was selected because it captures the relationship between total sale value and the other predictor variables without being too complex. The higher-order term and interaction effects were considered to account for the nonlinearity of the variable Building Value. The different interactions were guesses of potential variables that sounded like they would interact with each other.
+
+The different interactions that we considered in our fit models before we found our final model were the following:
+
+* Model 1: Model with first-order variables
+* Model 2: Testing higher order of bldgvalue and interactions between bldgvalue, landvalue, and totalbldgsqft
+* Model 2.5: Removed bldgvalue and totalbldgsqft interaction
+* Model 3: Testing interaction between deedacres and bldgvalue, landvalue, totalbldgsqft.
+* Model 3.5: Removed interaction between deedacres and totalbldgsqft, deedacres and bldgvalue
+* Model 4: Testing interaction between built_before_1990 and all other predictors
+
+We conducted ANOVA tests between each model to see the significance of each interaction term in improving the overall performance of the model. Fit model 3 had the highest adjusted R^2 value of 0.4704. However, after dropping two interactions, we found that fit model 3.5 had a lower adjusted R^2 value of 0.4683 but is slightly less complex than model 3. Using an ANOVA test to test the significance of the two dropped variables, we get a p-value of 0.05773, indicating that the two interaction variables are not statistically significant contributors to the model's overall performance. This is how we concluded that fit model 3.5 was the best model out of our other models. Every single interaction in fit model 4 had individual t-test p-values greater than 0.35 so fit model 4 did not provide meaningful improvements to the predictive performance of our model. Therefore, we decided not to pursue it further.
+
+
+### Conclusion
+
+Our analysis highlighted several findings:
+
+Surprising Insignificance: TotalBldgSqft and IsDetachedUnit were not significant predictors, countering the expectation that larger or detached homes would equate to higher prices.
+DeedAcres Trend: Contrary to prediction, properties with larger acreage tended to have lower sale values.
+Limited Interactions: Interactions between predictors, such as BuiltBefore1990 and LandValue, had minimal impact on model fit.
+Predictive Power: The adjusted R-squared value of 0.4001 reflects moderate predictive ability but highlights the need for more complex modeling.
+
+Our findings indicate that the selected predictors don’t fully capture the variability in housing prices. Buyers and sellers can use this model as a starting point to estimate reasonable prices and identify influential features. However, more robust modeling—including non-linear terms and additional predictors—is needed for greater accuracy. We do think a higher R^2 is possible, but it would require a more complex model and more time to explore combinations.
+
+
+### Project Limitations 
+
+Several factors limited our analysis:
+
+Subset Size: Since there were 280,000 observations initially, reducing the dataset improved computation speed but may have excluded relevant patterns. The loss of potentially relevant patterns likely had a large effect on the R^2 of our model.
+Temporal Accuracy: House sale values are based on the most recent listings, meaning that some values could misrepresent current market conditions, e.g., a house that was last listed and sold 20 years ago.
+Model Fit: Violations of linear regression assumptions and a low adjusted R-squared value both indicate that the model could be improved
+Variable Exclusion: Variables like location and owner were excluded for simplicity, and might hold predictive value.
+
+
+### Appendix
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+library(GGally)
+library(car)
+library(dplyr)
+library(leaps)
+library(ggplot2)
+library(MASS)
+```
+
+Roles:
+
+```{r, echo = FALSE}
+roles <- matrix(c(" Riley Menter "," Lucas Chin ", " Ryan Kitagawa ", " Lucas Chin ", " Lucas Chin ", " Riley Menter", " Justin Tran ", " Ryan Kitagawa ", " Ryan Kitagawa ", " Justin Tran", " Lucas Chin ", " Justin Tran ", " Justin Tran ", " Ryan Kitagawa", " Riley Menter ", " Riley Menter"), ncol = 4, byrow = TRUE)
+colnames(roles) <- c(" Introduction ", " Analysis 1 ", " Analysis 2 ", " Final Project ")
+rownames(roles) <- c("Script", "Script", "LDA", "Facilitator")
+as.table(roles)
+```
+
+##INTRODUCTION
+
+``` {r}
+data <- read.csv2("property.csv")
+```
+
+
+Selecting a subset of data
+```{r}
+set.seed(2) # For consistency
+
+data <- data %>% filter(phycity == "Cary" | phycity=="CARY" | phycity=="cary") # Only Cary county in NC
+
+data <- drop_na(data) # Drop rows with missing values
+
+data <- sample_n(data, size = 999, replace = FALSE) # Sample 999 observations
+
+data <- data %>% filter(totalsalevalue > 0) # Ignore rows with negative sales values
+
+
+#data <- sample_n(data, size = 999, replace = FALSE) # Randomly sample 999 UNIQUE rows
+
+data <- data %>% dplyr::select(totalsalevalue, bldgvalue, landvalue, # looking at ONLY these columns
+                        totalbldgsqft, deedacres, yearbuilt,
+                        apastructuredesc, phycity)
+
+data <- data %>% mutate(totalbldgsqft = as.integer(totalbldgsqft), deedacres = as.double(deedacres)) # Convert some columns data types
+
+head(data)
+```
+
+
+```{r}
+# Convert qualitative to quantitative data AND rename the variables we mutated
+cleaned_data1 <- data %>% mutate(yearbuilt = if_else(yearbuilt <1990, "1", "0"),
+                                apastructuredesc = if_else(apastructuredesc != "Detached Units", "0", "1")) %>%
+                rename(built_before_1990 = yearbuilt,
+                        IsDetachedUnit = apastructuredesc)
+
+# Scale variables to thousands of dollars, convert data types, and exclude sale values below 1000 
+cleaned_data1 <- cleaned_data1 %>% mutate(totalsalevalue = as.double(totalsalevalue) / 1000, 
+                        bldgvalue = as.double(bldgvalue) / 1000, 
+                        landvalue = as.double(landvalue) / 1000,
+                        totalbldgsqft = as.integer(totalbldgsqft), 
+                        deedacres = as.double(deedacres)) %>%
+                  filter(totalsalevalue < 1000) 
+
+cleaned_data <- cleaned_data1 %>% dplyr::select(totalsalevalue, bldgvalue, landvalue,
+                        totalbldgsqft, deedacres, built_before_1990,
+                        IsDetachedUnit)
+
+#cleaned_data
+```
+
+``` {r}
+ggpairs(cleaned_data)
+```
+
+``` {r}
+hist(cleaned_data$totalsalevalue, probability = TRUE, main = "Histogram of Total Sale Value", xlab = "Total Sale Value (per $1000)")
+```
+
+Response variable: totalsalevalue has a right skewed distribution
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+##Model Selection
+
+```{r}
+# Linear model for all predictors
+fit <- lm(totalsalevalue ~ . , data = cleaned_data)
+summary(fit)
+```
+
+Explanation of model selection procedure
+
+The H0 for the F-test is that all of the parameters are zero, and since the P value is very low, we reject the null hypothesis and conclude that at least one of the parameters is nonzero.
+
+The t-test for Totalbldgsqft, yearbuilt, Indivibillclass, IsDetachedUnit1, and phycityCARY are detached are nonsignificant when significance = 0.05.
+
+Generally, you would expect that the more area a building has, the more it would cost. The data here says otherwise for acres but not bldgsqft.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+Multicollinarity: Variance Inflation Factor
+
+```{r}
+vif(fit)
+```
+Since there are no parameters greater than 10, we can conclude that there is no major multicollinearity.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+##Residual Diagnostic on Fit
+
+Linearity assumption and constant variance assumption: Residual vs fitted
+``` {r}
+# Residuals vs Fitted Plot of the fitted model
+ggplot(data = fit, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(title= "Residual vs fitted plot", x = "Predicted", y = "Residual")
+```
+The plot of residuals vs. predicted shows a slight pattern. The linearity condition is not satisfied. The vertical spread of the residuals is nearly constant across the plot but shows a slight negative slope after predicted 400. The constant variance condition is not satisfied.
+
+
+Residual vs Fitted
+``` {r}
+# (which = 1): Looks for non-linearity (residuals vs fitted)
+# (which = 2): Looks at normality of residual (QQ Plot)
+# (which = 3): Looks at homoscedasticity (constant variance of residuals).
+plot(fit, which = 3)
+```
+
+INTERPRETATION: The red curve has a slight upward trend on the right side of the curve. The variance isn't entirely constant especially as we approach larger fitted values. This slight pattern indicates heteroscedasticity (violating the assumption of constant variance). This means that transformations are necessary.
+
+Normality Test: Q-Q Plot
+
+```{r}
+qqnorm(resid(fit))
+qqline(resid(fit)) # Reference line to compare to
+```
+The residuals follow the reference line closely for the middle data points. However, the data points on the left and right tails deviate largely from the reference line. This indicates a violation in the normality assumption.
+
+Normality Test: Shapiro Test
+``` {r}
+shapiro.test(resid(fit))
+```
+The Shapiro-Wilk test has a p-value of 2.2e-16. This, along with the histogram and QQ plot suggest that residuals appear to be non-normal.
+
+Statistical test on Independence Assumption
+``` {r}
+dwt(fit)
+```
+Since the p-value for the Durbin-Watson test is .758 (greater than .05), we do not reject the null hypothesis, and cannot conclude that the residuals in this regression model are autocorrelated.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+##Transformation
+```{r}
+bc <- boxcox(fit)
+bc.power <- bc$x[which.max(bc$y)] # Get the power value
+bc.power
+```
+The optimal Box-Cox transformation suggests a power of 0.3434343, indicating a preference for a square root transformation. 
+
+```{r}
+# New fit model with a square root transformation applied to the dependent variable
+fit.sqrt <- lm(sqrt(totalsalevalue) ~., data=cleaned_data)
+summary(fit.sqrt)
+```
+
+``` {r}
+# Distribution of the square root values of totalsalevalue
+hist(fit.sqrt$model$`sqrt(totalsalevalue)`)
+```
+
+```{r}
+qqnorm(resid(fit.sqrt))
+qqline(resid(fit.sqrt))
+```
+The residuals follow the reference line closely for the middle data points. However, the data points on the left and right tails deviate from the reference line. This indicates a violation in the normality assumption.
+
+```{r}
+# Plots comparing EACH predictor variable with the square root (transformed) dependent variable (totalsalevalue)
+
+par(mfrow=c(2,3))
+
+plot(fit.sqrt$model$bldgvalue, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt$model$landvalue, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt$model$totalbldgsqft, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt$model$deedacres, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt$model$built_before_1990, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt$model$IsDetachedUnit, fit.sqrt$model$`sqrt(totalsalevalue)`)
+
+```
+
+```{r}
+# UPDATED fit model with log transformations applied to landvalue and deedacres.
+fit.sqrt1 <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + built_before_1990 + IsDetachedUnit, data=cleaned_data)
+summary(fit.sqrt)
+```
+
+```{r}
+# Plots comparing EACH predictor variable with the square root (transformed) dependent variable (totalsalevalue)
+# This time, for the fit.sqrt1 model
+
+par(mfrow=c(2,3))
+
+plot(fit.sqrt1$model$bldgvalue, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt1$model$`log(landvalue)`, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt1$model$totalbldgsqft, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt1$model$`log(deedacres)`, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt1$model$built_before_1990, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(fit.sqrt1$model$IsDetachedUnit, fit.sqrt1$model$`sqrt(totalsalevalue)`)
+```
+
+```{r}
+qqnorm(resid(fit.sqrt1))
+qqline(resid(fit.sqrt1))
+```
+The residuals follow the reference line closely for the middle data points. However, the data points on the left and right tails deviate from the reference line. This indicates a violation in the normality assumption.
+
+
+```{r}
+shapiro.test(resid(fit.sqrt1))
+```
+The Shapiro-Wilk test has a p-value of 8.99e-10. This, along with the QQ plot above suggest that residuals appear to be non-normal.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+##Building a Step wise Regression Model:
+
+Use a step wise regression to add predictors to the model one by one until no additional benefit is seen.
+
+```{r}
+# specify a null model w/ no predictors
+null_model <- lm(totalsalevalue ~ 1, data = cleaned_data)
+
+# specify the full model using all of the potential predictors
+full_model <- lm(totalsalevalue ~ ., data = cleaned_data)
+
+# Use a step wise algorithm to build a parsimonious model
+step_model1 <- step(null_model, scope = list(lower = null_model, upper = full_model), direction = "both", test = "F")
+```
+The 6 predictors kept from the piecewise regression using the null model (step_model1) are yearbuilt, landvalue, IsDetachedUnit, phycity, bldgvalue, and totalbldgsqft.
+
+```{r}
+step_model2 <- step(full_model, scope = list(lower = null_model, upper = full_model), direction = "both", test = "F")
+```
+
+```{r}
+summary(step_model1)
+summary(step_model2)
+```
+Starting with no predictors (step_model1) and using the step function yields the same results as starting with all predictors (step_model2), so we will proceed with the step_model2 since its variables are organized in a cleaner order.
+
+Quantitative:
+- bldgvalue (Building Value) 
+- landvalue (Land Value)
+- deedacres (land size in Acres in deed)
+Qualitative:
+- ResLessThan101 (If the land is residential and < 10 acres)
+- IndivBillClass1. (If billing class for taxes is individual)
+
+```{r}
+step_model2
+```
+
+```{r}
+# To observe relationship between landvalue and totalsalevalue.
+plot(step_model2$model$landvalue, step_model2$model$totalsalevalue)
+```
+There doesn't seem to be a clear trend. 
+
+```{r}
+qqnorm(resid(step_model2))
+qqline(resid(step_model2))
+```
+The residuals follow the reference line closely for the middle data points. However, the data points on the left and right tails deviate from the reference line. This indicates a violation in the normality assumption.
+
+Multicollinarity: Variance Inflation Factor
+
+```{r}
+vif(step_model2)
+```
+Since there are no parameters greater than 10, we can conclude that there is no major multicollinearity.
+
+```{r}
+bc <- boxcox(step_model2)
+bc.power <- bc$x[which.max(bc$y)]
+bc.power
+```
+The optimal Box-Cox transformation suggests a power of 0.3434343, indicating a preference for a square root transformation. 
+
+```{r}
+# Output the fit & step_model2 models. Then make a square root transformation model of step_model2 & output
+fit
+step_model2
+step_model2.sqrt <- lm(sqrt(totalsalevalue) ~., data = step_model2$model)
+summary(step_model2.sqrt)
+summary(step_model2)
+```
+
+```{r}
+# Look at distribution of square root transformed values of totalsalevalue.
+hist(step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+```
+
+
+```{r}
+par(mfrow=c(2,3))
+plot(step_model2.sqrt$model$bldgvalue, step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt$model$landvalue, step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt$model$totalbldgsqft, step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt$model$deedacres, step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt$model$built_before_1990, step_model2.sqrt$model$`sqrt(totalsalevalue)`)
+```
+
+```{r}
+step_model2.sqrt1 <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft+ log(deedacres) + built_before_1990, data=step_model2$model)
+summary(step_model2.sqrt1)
+```
+
+```{r}
+hist(resid(step_model2))
+
+step_model2.sqrt1$.stdresid <- rstandard(step_model2.sqrt1)
+
+ggplot(data =step_model2.sqrt1, aes(x = .fitted, y = .stdresid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Predicted values", y = "Standardized Residuals")
+
+step_model2.test <- step_model2
+step_model2.test$model$.stdresid <- rstandard(step_model2.test)
+
+step_model2.test$model <- step_model2.test$model %>% filter(.stdresid <= 3 & .stdresid >= -3)
+# step_model2.test$model # To check data
+
+step_model2.test <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft+ log(deedacres) + built_before_1990, data=step_model2.test$model)
+
+step_model2.test$.stdresid <- rstandard(step_model2.test)
+
+ggplot(data =step_model2.test, aes(x = .fitted, y = .resid)) +
+  geom_point(alpha = 0.5) +
+  geom_hline(yintercept = 0, color = "red", linetype = "dashed") +
+  labs(x = "Predicted values", y = "Standardized Residuals")
+```
+
+
+We can quickly check that our R-squared is 0.4051 and adjusted r-squared is 0.4001. This model does not seem too bad.  However, 40.01% is not too high so we should look into higher-order and interaction terms for our next models.
+
+
+```{r}
+par(mfrow=c(2,3))
+plot(step_model2.sqrt1$model$bldgvalue, step_model2.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt1$model$`log(landvalue)`, step_model2.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt1$model$totalbldgsqft, step_model2.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt1$model$`log(deedacres)`, step_model2.sqrt1$model$`sqrt(totalsalevalue)`)
+
+plot(step_model2.sqrt1$model$built_before_1990, step_model2.sqrt1$model$`sqrt(totalsalevalue)`)
+```
+Checking normality again
+
+```{r}
+qqnorm(resid(step_model2.sqrt1))
+qqline(resid(step_model2.sqrt1))
+```
+
+```{r}
+shapiro.test(resid(step_model2.sqrt1))
+```
+
+```{r}
+vif(step_model2.sqrt1)
+```
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+## Fit models
+
+Model 1:
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + B_5 X_5$
+``` {r}
+summary(step_model2.sqrt1)
+```
+
+The assumption checks for model 1 is shown above at the end of analysis 1.
+
+
+Looking at the stepwise model for bldgvalue, we should check it as a potential higher-order.  Bldgvalue, landvalue, and totalbldgsqft seem like they can also interact with each other.
+
+Model 2: Testing higher-order of X1 and X3 and interactions between x1, x2, and x3
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + \beta_5 X_5 + \beta_6 X_1^2 + \beta_7  X_1 X_2  + \beta_8 X_2 X_3 + \beta_9 X_1 X_3$
+
+``` {r}
+fitmodel2 <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + 
+                  built_before_1990 + I(bldgvalue^2) +
+                  bldgvalue:log(landvalue) + 
+                  log(landvalue):totalbldgsqft + 
+                  bldgvalue:totalbldgsqft, data=step_model2$model)
+
+summary(fitmodel2)
+```
+
+Adjusted R-squared is higher than model1
+
+```{r}
+vif(fitmodel2)
+
+```
+
+``` {r}
+anova(step_model2.sqrt1, fitmodel2)
+```
+
+$H0: \beta_6 = \beta_7 = \beta_8 = \beta_9 = 0$ 
+$Ha: \beta_i \ne 0, i = 6, 7, 8, 9$
+Test statistic: F-test = 29.709
+p-value: <2.2e-16
+Conclusion: Since the p value is less than 0.05, we can reject the null hypothesis and conclude that at least one of the tested variables is not zero.  This suggests that at least one of the interactions or higher-order variables are significant contributors to the model.
+
+
+Looking at the p-values from the individual t-tests, we can see that the interaction of bldgvalue(X1) and totalbldgsqft (X3) has a p-value 0.632800 so we will exclude it in the next model.  The variable deedacres seems like it would interact with totalbldgsqft, bldgvalue, and landvalue so we will test it in model 3.
+
+
+
+
+
+Model 2 adjusted: Removed X1 and X3 interaction
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + \beta_5 X_5 + \beta_6 X_1^2 + \beta_7  X_1 X_2  + \beta_8 X_2 X_3$
+
+``` {r}
+fitmodel2adj <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + 
+                  built_before_1990 + I(bldgvalue^2) +
+                  bldgvalue:log(landvalue) + 
+                  log(landvalue):totalbldgsqft, data=step_model2$model)
+
+summary(fitmodel2adj)
+```
+
+
+Model 3: Testing interaction between X4 and X1, X2, X3.
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + \beta_5 X_5 + \beta_6 X_1^2 + \beta_7  X_1 X_2  + \beta_8 X_2 X_3 + \beta_9 X_4 X_2 + \beta_{10} X_4 X_3 + \beta_{11} X_4 X_1$
+
+```{r}
+fitmodel3 <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + 
+                  built_before_1990 + I(bldgvalue^2) +
+                  bldgvalue:log(landvalue) + 
+                  log(landvalue):totalbldgsqft + 
+                  log(deedacres):log(landvalue) + log(deedacres):totalbldgsqft +
+                  log(deedacres):bldgvalue, data=step_model2$model)
+
+summary(fitmodel3)
+```
+
+```{r}
+anova(fitmodel2adj, fitmodel3)
+```
+
+$H0: \beta_9 = \beta_10 = \beta_11 = 0$ 
+$Ha: \beta_i \ne 0, i = 9, 10, 11$
+Test statistic: F-test = 0.0002073
+p-value: 6.5901
+
+Conclusion: Since the p value is less than 0.05, we can reject the null hypothesis and conclude that at least one of the tested terms had a significant impact on the model.  Looking at the p-values of the individual t-tests, we can see that the interaction between deedacres(X4) and totalbldgedqft(X3) is 0.737561 so we will exclude the interaction in the next model.
+
+Since we haven't seen the interactions between predictor built_before_1990 and other variables, we will check them.
+
+
+
+Model 3adj: Removed interaction between X4 and X3, X4 and X1
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + \beta_5 X_5 + \beta_6 X_1^2 + \beta_7  X_1 X_2  + \beta_8 X_2 X_3 + \beta_9 X_4 X_2$
+```{r}
+fitmodel3adj <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + 
+                  built_before_1990 + I(bldgvalue^2) +
+                  bldgvalue:log(landvalue) + 
+                  log(landvalue):totalbldgsqft + 
+                  log(deedacres):log(landvalue), data=step_model2$model)
+
+
+summary(fitmodel3adj)
+```
+
+
+```{r}
+anova(fitmodel3adj, fitmodel3)
+```
+
+
+
+Model 4: Testing interaction between X5 and all other predictors
+$y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \beta_3  X_3 + \beta_4 X_4 + \beta_5 X_5 + \beta_6 X_1^2 + \beta_7 X_1 X_2  + \beta_8 X_2 X_3 + \beta_9 X_4 X_2 + \beta_10 X_5 X_1 + \beta_11 X_5 X_2 + \beta_12 X_5 X_3 + \beta_13 X_5 X_4$
+
+```{r}
+fitmodel4 <- lm(sqrt(totalsalevalue) ~ bldgvalue + log(landvalue) + totalbldgsqft + log(deedacres) + 
+                  built_before_1990 + I(bldgvalue^2) + 
+                  bldgvalue:log(landvalue) + 
+                  log(landvalue):totalbldgsqft + 
+                  log(deedacres):log(landvalue) +
+                  built_before_1990:bldgvalue +
+                  built_before_1990:log(landvalue) +
+                  built_before_1990:totalbldgsqft +
+                  built_before_1990:log(deedacres), data=step_model2$model)
+
+summary(fitmodel4)
+```
+
+```{r}
+anova(fitmodel3adj, fitmodel4)
+```
+
+$H0: \beta_10 = \beta_11 = \beta_12 = \beta_13 = 0$ 
+$Ha: \beta_i \ne 0, i = 10, 11, 12, 13$
+Test statistic: 0.7817
+p-value: 0.5372
+
+Conclusion: We fail to reject the null hypothesis and conclude that none of these tested terms have a significant impact on the model.  Looking at the p-values of the individual t-tests, we can see that every single one had a p-value > 0.05.  So we will exclude all these interactions in the final model.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Residual Assumption tests for final model
+
+Final Model:
+$y = 6.468 + 0.106 X_1 + 0.249 X_2 - 1.160e-02 X_3 + 5.125 X_4 + 0.362 X_5 - 9.795e-06 X_1^2 - 1.360e-02 X_1 X_2  + 1.943e-03 X_2 X_3 - 0.975 X_4 X_2 - 2.572e-03 X_4 X_1$
+
+
+```{r}
+# fitmodel3adj$model # To check
+
+```
+
+```{r}
+par(mfrow=c(2,3))
+plot(fitmodel3adj$model$bldgvalue, fitmodel3adj$model$`sqrt(totalsalevalue)`)
+
+plot(fitmodel3adj$model$`log(landvalue)`, fitmodel3adj$model$`sqrt(totalsalevalue)`)
+
+plot(fitmodel3adj$model$totalbldgsqft, fitmodel3adj$model$`sqrt(totalsalevalue)`)
+
+plot(fitmodel3adj$model$`log(deedacres)`, fitmodel3adj$model$`sqrt(totalsalevalue)`)
+
+plot(fitmodel3adj$model$built_before_1990, fitmodel3adj$model$`sqrt(totalsalevalue)`)
+```
+
+
+```{r}
+qqnorm(resid(fitmodel3adj))
+qqline(resid(fitmodel3adj))
+```
+
+Some large deviations at the left tail, right tail isn't concerning. 
+
+
+```{r}
+shapiro.test(resid(fitmodel3adj))
+```
+
+Mild deviations from normality, P-value lower than 0.05 means data doesn't follow normal distribution. 
+
